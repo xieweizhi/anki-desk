@@ -28,7 +28,7 @@ struct HowToContent: View {
             topic("keyboard", "Use the shortcut",
                   "Press \(shortcut) in any app to bring the widget forward and give it the keyboard. Press it again to hide it. Change it in Settings › Shortcut.")
             topic("play.rectangle", "Review in the widget",
-                  "Click Review. Space shows the answer, 1 Again, 2 Hard, 3 Good, 4 Easy, R replays audio, Esc goes back. Images and audio from your cards play here; the 1× button next to the audio changes its speed, and Settings › Widget › Card text makes the card text larger or smaller; anything else opens in Anki. Grades go to Anki's own scheduler.")
+                  "Click Review, or click a deck in the Medium widget to review only that deck. Space shows the answer, 1 Again, 2 Hard, 3 Good, 4 Easy, R replays audio, Esc goes back. Images and audio from your cards play here; the 1× button next to the audio changes its speed, and Settings › Widget › Card text makes the card text larger or smaller; anything else opens in Anki. Grades go to Anki's own scheduler.")
             topic("arrow.triangle.2.circlepath", "Sync",
                   "Anki Desk asks Anki to sync with AnkiWeb on the interval you set (Settings › Sync), using the login saved in Anki. Sign in once in Anki by clicking Sync there.")
             topic("paintpalette", "Make it yours",

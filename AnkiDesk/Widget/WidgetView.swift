@@ -4,7 +4,8 @@ import SwiftUI
 struct WidgetActions {
     var openSettings: () -> Void = {}
     var openHowTo: () -> Void = {}
-    var startReview: () -> Void = {}
+    /// Reviews one deck, or all counted decks with nil.
+    var startReview: (Int64?) -> Void = { _ in }
 }
 
 private struct WidgetActionsKey: EnvironmentKey {
@@ -243,15 +244,9 @@ struct MediumWidget: View {
         Rectangle().fill(theme.line).frame(height: 1)
         VStack(spacing: 0) {
             ForEach(model.counted) { deck in
-                HStack(spacing: 6) {
-                    Text(deck.label).lineLimit(1).truncationMode(.tail)
-                    Spacer(minLength: 4)
-                    count(deck.newCount, theme.new, width: 28)
-                    count(deck.learnCount, theme.learn, width: 28)
-                    count(deck.reviewCount, theme.review, width: 34)
+                DeckRow(deck: deck, theme: theme, enabled: deck.due > 0 && model.connection == .connected) {
+                    actions.startReview(deck.id)
                 }
-                .font(theme.text(13))
-                .frame(height: 28)
             }
         }
         footer
@@ -263,7 +258,7 @@ struct MediumWidget: View {
                 .font(theme.text(11)).foregroundStyle(theme.muted)
             Spacer()
             if model.totals.all > 0 && model.connection == .connected {
-                ThemedButton(title: "Review", theme: theme, action: actions.startReview)
+                ThemedButton(title: "Review", theme: theme) { actions.startReview(nil) }
             }
             settingsButton
         }
@@ -294,6 +289,39 @@ struct MediumWidget: View {
         .font(theme.text(12))
         .foregroundStyle(theme.muted)
         .monospacedDigit()
+    }
+}
+
+/// One deck's counts. Clicking a deck with cards due reviews just that deck.
+private struct DeckRow: View {
+    let deck: DeckStats
+    let theme: Theme
+    let enabled: Bool
+    let action: () -> Void
+    @State private var hovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Text(deck.label).lineLimit(1).truncationMode(.tail)
+                Spacer(minLength: 4)
+                count(deck.newCount, theme.new, width: 28)
+                count(deck.learnCount, theme.learn, width: 28)
+                count(deck.reviewCount, theme.review, width: 34)
+            }
+            .font(theme.text(13))
+            .frame(height: 28)
+            .padding(.horizontal, 6)
+            .background(theme.track.opacity(hovered && enabled ? 1 : 0), in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, -6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .onHover { hovered = $0 }
+        .help(enabled ? "Review this deck" : "")
+        .accessibilityLabel("\(deck.label), \(deck.due) due")
+        .accessibilityHint(enabled ? "Reviews this deck" : "")
     }
 
     private func count(_ n: Int, _ color: Color, width: CGFloat) -> some View {
@@ -373,7 +401,7 @@ struct PillWidget: View {
             Spacer(minLength: 0)
             StatusLine(theme: theme, compact: true)
             if state == .counts {
-                ThemedButton(title: "Review", theme: theme, action: actions.startReview)
+                ThemedButton(title: "Review", theme: theme) { actions.startReview(nil) }
             }
         }
         .monospacedDigit()

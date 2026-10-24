@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let actions = WidgetActions(
             openSettings: { [weak self] in self?.showSettings() },
             openHowTo: { [weak self] in self?.showHowTo() },
-            startReview: { [weak self] in self?.startReview() }
+            startReview: { [weak self] deck in self?.startReview(deck: deck) }
         )
         let widget = WidgetController(model: model, review: review, actions: actions)
         self.widget = widget
@@ -74,9 +74,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !model.prefs.finishedSetup { showConnect() }
     }
 
-    func startReview() {
+    func startReview(deck: Int64? = nil) {
         widget?.summon()
-        Task { await review.start() }
+        Task { await review.start(deck: deck) }
     }
 
     func showSettings() {

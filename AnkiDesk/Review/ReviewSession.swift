@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Reviews the selected decks' due cards inside the widget, answering through Anki's scheduler.
+/// Reviews the due cards of the selected decks, or of one deck the user picked, inside the widget, answering through Anki's scheduler.
 @Observable
 final class ReviewSession {
     enum Side { case question, answer }
@@ -13,6 +13,8 @@ final class ReviewSession {
     }
 
     private(set) var isActive = false
+    /// The one deck being reviewed, when the user started from a deck; nil reviews all counted decks.
+    private(set) var deckID: Int64?
     private(set) var card: Card?
     private(set) var side: Side = .question
     private(set) var loading = false
@@ -30,6 +32,10 @@ final class ReviewSession {
         self.model = model
         audio.rate = Float(model.prefs.audioSpeed)
     }
+
+    var decks: [DeckStats] { Counting.reviewed(model.decks, selected: model.prefs.selectedDecks, only: deckID) }
+    /// What's left today in the decks being reviewed, by Anki's counts.
+    var totals: Totals { Counting.totals(decks) }
 
     // MARK: Current side
 
@@ -57,9 +63,10 @@ final class ReviewSession {
 
     // MARK: Flow
 
-    func start() async {
+    func start(deck: Int64? = nil) async {
         guard !isActive else { return }
         isActive = true
+        deckID = deck
         finished = false
         error = nil
         loading = true
@@ -75,6 +82,7 @@ final class ReviewSession {
 
     func stop() {
         isActive = false
+        deckID = nil
         audio.stop()
         card = nil
         queue = []
@@ -126,7 +134,7 @@ final class ReviewSession {
         let active = "-is:suspended -is:buried"
         // Take no more of each kind than Anki's counts, which apply the deck's daily limits. A search for
         // is:due ignores them, and would keep serving a deck that Anki shows as done for today.
-        for deck in model.counted {
+        for deck in decks {
             let d = Counting.deckQuery(deck.name)
             if deck.learnCount > 0 {
                 learn += try await model.anki.findCards("\(d) is:due is:learn \(active)").sorted().prefix(deck.learnCount)

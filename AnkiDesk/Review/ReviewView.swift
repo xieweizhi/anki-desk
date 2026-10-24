@@ -42,11 +42,11 @@ struct ReviewView: View {
             .keyboardShortcut(.cancelAction)
             .help("Back (Esc)")
             .accessibilityLabel("Back to today")
-            Text(review.card?.info.deckName.replacingOccurrences(of: "::", with: " › ") ?? "Today")
+            Text(review.card?.info.deckName.replacingOccurrences(of: "::", with: " › ") ?? (review.deckID == nil ? nil : review.decks.first?.label) ?? "Today")
                 .lineLimit(1)
                 .truncationMode(.tail)
             Spacer(minLength: 8)
-            Text("\(model.totals.all) left").monospacedDigit()
+            Text("\(review.totals.all) left").monospacedDigit()
         }
         .font(theme.text(12))
         .foregroundStyle(theme.muted)
@@ -57,7 +57,8 @@ struct ReviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: "checkmark.circle").font(.system(size: 34, weight: .light)).foregroundStyle(theme.review)
             Text("Done for now").font(theme.number(30))
-            Text(model.totals.learn > 0 ? "Learning cards come back in a few minutes." : "Nothing left today in your selected decks.")
+            Text(review.totals.learn > 0 ? "Learning cards come back in a few minutes."
+                 : review.deckID == nil ? "Nothing left today in your selected decks." : "Nothing left today in this deck.")
                 .font(theme.text(12)).foregroundStyle(theme.muted)
             ThemedButton(title: "Back", theme: theme) { review.stop() }.padding(.top, 4)
         }

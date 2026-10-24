@@ -28,6 +28,12 @@ enum Counting {
         return chosen.filter { deck in !names.contains { deck.name.hasPrefix($0 + "::") } }
     }
 
+    /// The decks a review takes cards from: one deck when the user picked it, else the counted ones.
+    static func reviewed(_ decks: [DeckStats], selected: Set<Int64>, only deck: Int64?) -> [DeckStats] {
+        guard let deck else { return counted(decks, selected: selected) }
+        return decks.filter { $0.id == deck }
+    }
+
     static func totals(_ decks: [DeckStats]) -> Totals {
         decks.reduce(into: Totals()) {
             $0.new += $1.newCount
