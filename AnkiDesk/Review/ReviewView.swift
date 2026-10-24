@@ -5,6 +5,7 @@ struct ReviewView: View {
     @Environment(ReviewSession.self) private var review
     let theme: Theme
     @State private var cardHeight: CGFloat = 160
+    @State private var backHovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -26,23 +27,30 @@ struct ReviewView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 4) {
+            // Only the chevron goes back. The deck name is plain text, so dragging the window by it
+            // doesn't end in a click.
             Button { review.stop() } label: {
-                HStack(spacing: 2) {
-                    Image(systemName: "chevron.left")
-                    Text(review.card?.info.deckName.replacingOccurrences(of: "::", with: " › ") ?? "Today").lineLimit(1)
-                }
-                .frame(height: 28)
-                .contentShape(Rectangle())
+                Image(systemName: "chevron.left")
+                    .fontWeight(.semibold)
+                    .frame(width: 26, height: 26)
+                    .background(theme.track.opacity(backHovered ? 1 : 0), in: Circle())
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .onHover { backHovered = $0 }
             .keyboardShortcut(.cancelAction)
+            .help("Back (Esc)")
             .accessibilityLabel("Back to today")
-            Spacer()
+            Text(review.card?.info.deckName.replacingOccurrences(of: "::", with: " › ") ?? "Today")
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 8)
             Text("\(model.totals.all) left").monospacedDigit()
         }
         .font(theme.text(12))
         .foregroundStyle(theme.muted)
+        .padding(.leading, -7)
     }
 
     private var finished: some View {
