@@ -18,7 +18,7 @@ struct HowToContent: View {
                 .foregroundStyle(.secondary)
 
             topic("link", "Connect once",
-                  "Anki Desk reads your decks from the Anki app on this Mac through the AnkiConnect add-on (code 2055492159). Keep Anki open in the background. There's no account to create.")
+                  "Anki Desk reads your decks from the Anki app on this Mac through the AnkiConnect add-on (code 2055492159). Keep Anki open in the background; Anki Desk opens it for you when it starts (Settings › Widget). There's no account to create.")
             topic("rectangle.stack", "Pick your decks",
                   "Open Settings from the slider button on the widget or from the menu bar icon, then switch on the decks to count. A deck's count includes its subdecks.")
             topic("hand.draw", "Move it anywhere",

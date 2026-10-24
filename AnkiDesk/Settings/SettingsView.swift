@@ -76,6 +76,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Toggle("Show count in menu bar", isOn: $prefs.showCountInMenuBar)
+                Toggle("Open Anki when Anki Desk starts", isOn: $prefs.openAnkiOnStart)
                 Toggle("Open at login", isOn: $openAtLogin)
                     .onChange(of: openAtLogin) { _, on in
                         prefs.openAtLogin = on

@@ -37,6 +37,7 @@ final class Preferences {
     var clickThrough: Bool { didSet { store.set(clickThrough, forKey: "clickThrough") } }
     var autoplayAudio: Bool { didSet { store.set(autoplayAudio, forKey: "autoplayAudio") } }
     var finishedSetup: Bool { didSet { store.set(finishedSetup, forKey: "finishedSetup") } }
+    var openAnkiOnStart: Bool { didSet { store.set(openAnkiOnStart, forKey: "openAnkiOnStart") } }
 
     init(store: UserDefaults = .standard) {
         self.store = store
@@ -50,6 +51,7 @@ final class Preferences {
         clickThrough = store.bool(forKey: "clickThrough")
         autoplayAudio = store.object(forKey: "autoplayAudio") as? Bool ?? true
         finishedSetup = store.bool(forKey: "finishedSetup")
+        openAnkiOnStart = store.object(forKey: "openAnkiOnStart") as? Bool ?? true
     }
 
     var openAtLogin: Bool {

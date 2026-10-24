@@ -64,7 +64,7 @@ final class AppModel {
     }
 
     func refresh() async {
-        ankiRunning = NSWorkspace.shared.runningApplications.contains { Self.ankiBundleIDs.contains($0.bundleIdentifier ?? "") }
+        ankiRunning = Self.isAnkiRunning
         do {
             let stats = try await anki.allDeckStats()
             if connection != .connected {
@@ -117,12 +117,52 @@ final class AppModel {
         }
     }
 
-    func openAnki() {
+    /// Anki's launcher and the Anki it starts both report the launcher's bundle ID.
+    static var isAnkiRunning: Bool {
+        NSWorkspace.shared.runningApplications.contains { ankiBundleIDs.contains($0.bundleIdentifier ?? "") }
+    }
+
+    /// Opens Anki. In the background, it starts hidden, leaving focus with the app in front.
+    func openAnki(inBackground: Bool = false) {
+        stopHidingAnki()
         for id in Self.ankiBundleIDs {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
-                NSWorkspace.shared.openApplication(at: url, configuration: .init())
+                let configuration = NSWorkspace.OpenConfiguration()
+                configuration.activates = !inBackground
+                if inBackground { hideAnkiWhenItComesForward() }
+                NSWorkspace.shared.openApplication(at: url, configuration: configuration)
                 return
             }
         }
+    }
+
+    // MARK: Background launch
+
+    private var activationObserver: NSObjectProtocol?
+
+    /// Anki brings its window forward as it starts, whatever the launch asked for. For a short while after a
+    /// background launch, hide it each time it does; AnkiConnect keeps answering while Anki is hidden. The launcher
+    /// comes forward first, then the Anki it starts, so this stops once the real Anki has been hidden.
+    private func hideAnkiWhenItComesForward() {
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  Self.ankiBundleIDs.contains(app.bundleIdentifier ?? "") else { return }
+            let isLauncher = app.executableURL?.lastPathComponent == "launcher"
+            app.hide()
+            if !isLauncher {
+                MainActor.assumeIsolated { self?.stopHidingAnki() }
+            }
+        }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(30))
+            self?.stopHidingAnki()
+        }
+    }
+
+    private func stopHidingAnki() {
+        if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
+        activationObserver = nil
     }
 }

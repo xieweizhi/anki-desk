@@ -65,6 +65,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let widget = WidgetController(model: model, review: review, actions: actions)
         self.widget = widget
         widget.show()
+        // Once per launch: if the user quits Anki later, it stays quit.
+        if model.prefs.openAnkiOnStart && !AppModel.isAnkiRunning {
+            model.openAnki(inBackground: true)
+        }
         model.start()
         KeyboardShortcuts.onKeyUp(for: .toggleWidget) { [weak self] in self?.widget?.toggle() }
         if !model.prefs.finishedSetup { showConnect() }
