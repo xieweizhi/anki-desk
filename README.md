@@ -24,6 +24,10 @@ To build it yourself (Xcode 26+, [XcodeGen](https://github.com/yonaskolb/XcodeGe
 With a Developer ID Application certificate in the keychain, the script signs, notarizes and staples the DMG.
 Notarization needs a keychain profile, made once with an [app-specific password](https://account.apple.com):
 `xcrun notarytool store-credentials anki-desk --apple-id <apple id> --team-id <team id>`.
+
+To release from GitHub instead, bump `MARKETING_VERSION` in `project.yml` and push a matching tag (`git tag v0.1.3 && git push --tags`).
+The Release workflow builds, signs, notarizes and publishes it, using the repo secrets `DEVELOPER_ID_P12`,
+`DEVELOPER_ID_P12_PASSWORD`, `NOTARY_APPLE_ID`, `NOTARY_TEAM_ID` and `NOTARY_PASSWORD`.
 The website is `site/public/`, served by Cloudflare Workers Static Assets: `cd site && npx wrangler deploy`.
 
 ## License

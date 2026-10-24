@@ -7,6 +7,10 @@
 # and stapled, so they open without a Gatekeeper warning. Without one, the app is signed ad hoc.
 #   DEVELOPER_ID    signing identity (default: the first "Developer ID Application" identity in the keychain)
 #   NOTARY_PROFILE  notarytool keychain profile (default: anki-desk), made once with `xcrun notarytool store-credentials`
+#   NOTARY_APPLE_ID, NOTARY_TEAM_ID, NOTARY_PASSWORD
+#                   notarize with these instead of a keychain profile (used by .github/workflows/release.yml)
+#   RELEASE_TAG     the tag being released; must be v<MARKETING_VERSION>
+# On CI (CI is set) a missing Developer ID is an error rather than an ad hoc build.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -14,15 +18,28 @@ version=$(sed -n 's/^ *MARKETING_VERSION: "\(.*\)"/\1/p' project.yml)
 products=build/Build/Products/Release
 dmg=build/AnkiDesk.dmg
 identity=${DEVELOPER_ID:-$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)}
-profile=${NOTARY_PROFILE:-anki-desk}
+
+if [[ -n "${NOTARY_PASSWORD:-}" ]]; then
+    notary=(--apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD")
+else
+    notary=(--keychain-profile "${NOTARY_PROFILE:-anki-desk}")
+fi
+
+if [[ -n "${RELEASE_TAG:-}" && "$RELEASE_TAG" != "v$version" ]]; then
+    echo "Tag $RELEASE_TAG doesn't match MARKETING_VERSION $version in project.yml." >&2
+    exit 1
+fi
 
 if [[ -n "$identity" ]]; then
-    xcrun notarytool history --keychain-profile "$profile" >/dev/null 2>&1 || {
-        echo "No notarytool profile \"$profile\". Create it once with:" >&2
-        echo "  xcrun notarytool store-credentials $profile --apple-id <apple id> --team-id <team id>" >&2
+    xcrun notarytool history "${notary[@]}" >/dev/null 2>&1 || {
+        echo "Can't reach the notary service with these credentials. For a keychain profile, create it once with:" >&2
+        echo "  xcrun notarytool store-credentials anki-desk --apple-id <apple id> --team-id <team id>" >&2
         exit 1
     }
     echo "Signing with $identity"
+elif [[ -n "${CI:-}" ]]; then
+    echo "No Developer ID Application certificate in the keychain." >&2
+    exit 1
 else
     echo "No Developer ID Application certificate: signing ad hoc, not notarizing."
 fi
@@ -60,7 +77,7 @@ rm -f "$rw"
 if [[ -n "$identity" ]]; then
     codesign --sign "$identity" --timestamp "$dmg"
     # Notarizing the DMG also notarizes the app inside it; stapling lets it open offline.
-    xcrun notarytool submit "$dmg" --keychain-profile "$profile" --wait
+    xcrun notarytool submit "$dmg" "${notary[@]}" --wait
     xcrun stapler staple "$dmg"
     spctl --assess --type open --context context:primary-signature --verbose "$dmg"
 fi
