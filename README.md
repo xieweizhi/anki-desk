@@ -11,19 +11,17 @@ Today's Anki cards, right on your Mac desktop.
 - ⌃⌥A shows or hides it from any app
 - 4 themes, 3 sizes, count in the menu bar
 
-## Setup
+## Install
 
-1. In Anki, install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) (Tools › Add-ons › Get Add-ons, code `2055492159`) and restart Anki.
-2. Build and run (macOS 14+, Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen)):
-
-```bash
-xcodegen generate
-xcodebuild -project AnkiDesk.xcodeproj -scheme AnkiDesk -configuration Release -derivedDataPath build build
-open build/Build/Products/Release/AnkiDesk.app
-```
+1. Download **[AnkiDesk.dmg](https://github.com/xieweizhi/anki-desk/releases/latest/download/AnkiDesk.dmg)** and drag Anki Desk to Applications (macOS 14+).
+   It isn't notarized yet: on first launch, open System Settings › Privacy & Security and click **Open Anyway**.
+2. In Anki, install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) (Tools › Add-ons › Get Add-ons, code `2055492159`) and restart Anki.
 
 Keep Anki open in the background. There's no account: Anki Desk talks to Anki on `127.0.0.1:8765`.
 The menu bar icon has Settings and a How to Use guide.
+
+To build it yourself (Xcode 26+, [XcodeGen](https://github.com/yonaskolb/XcodeGen)): `scripts/release.sh` writes `build/AnkiDesk.dmg`;
+`scripts/release.sh --publish` also creates the GitHub release for the version in `project.yml`.
 
 ## License
 

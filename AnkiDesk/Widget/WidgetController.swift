@@ -23,13 +23,11 @@ final class WidgetPanel: NSPanel {
         onEscape?()
     }
 
-    /// Grow and shrink from the top edge, so the widget stays where it was put.
-    override func setFrame(_ frameRect: NSRect, display flag: Bool) {
-        var rect = frameRect
-        if frame.width > 0, rect.size != frame.size, rect.origin == frame.origin {
-            rect.origin.y = frame.maxY - rect.height
-        }
-        super.setFrame(rect, display: flag)
+    /// Fits the window to the widget, growing and shrinking from the top edge so it stays where it was put.
+    func fit(_ size: CGSize) {
+        let size = CGSize(width: ceil(size.width), height: ceil(size.height))
+        guard size.width > 0, size.height > 0, size != frame.size else { return }
+        setFrame(NSRect(x: frame.minX, y: frame.maxY - size.height, width: size.width, height: size.height), display: true)
         invalidateShadow()
     }
 }
@@ -46,13 +44,18 @@ final class WidgetController: NSObject, NSWindowDelegate {
         self.model = model
         self.review = review
         super.init()
+        // The widget reports its size and the panel follows, after layout. Letting the hosting view
+        // resize the window itself re-enters layout and can recurse until the stack overflows.
         let root = WidgetRootView()
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { [weak panel] size in
+                DispatchQueue.main.async { panel?.fit(size) }
+            }
             .environment(model)
             .environment(review)
             .environment(\.widgetActions, actions)
-        let hosting = NSHostingController(rootView: root)
-        hosting.sizingOptions = [.preferredContentSize]
-        panel.contentViewController = hosting
+        let hosting = NSHostingView(rootView: root)
+        hosting.sizingOptions = []
+        panel.contentView = hosting
         panel.delegate = self
         panel.onEscape = { [weak self] in self?.escape() }
         if !panel.setFrameUsingName("AnkiDeskWidget"), let screen = NSScreen.main?.visibleFrame {
