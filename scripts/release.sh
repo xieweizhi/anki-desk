@@ -1,19 +1,43 @@
 #!/bin/bash
-# Builds a universal Release app, packs it into a DMG, and (with --publish) attaches it to a GitHub release.
+# Builds a universal Release app, signs it, packs it into a DMG, and (with --publish) attaches it to a GitHub release.
 #   scripts/release.sh            # build/AnkiDesk.dmg only
 #   scripts/release.sh --publish  # also create release v<MARKETING_VERSION> on GitHub
+#
+# With a "Developer ID Application" certificate in the keychain, the app and DMG are signed with it, notarized
+# and stapled, so they open without a Gatekeeper warning. Without one, the app is signed ad hoc.
+#   DEVELOPER_ID    signing identity (default: the first "Developer ID Application" identity in the keychain)
+#   NOTARY_PROFILE  notarytool keychain profile (default: anki-desk), made once with `xcrun notarytool store-credentials`
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 version=$(sed -n 's/^ *MARKETING_VERSION: "\(.*\)"/\1/p' project.yml)
 products=build/Build/Products/Release
 dmg=build/AnkiDesk.dmg
+identity=${DEVELOPER_ID:-$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)}
+profile=${NOTARY_PROFILE:-anki-desk}
+
+if [[ -n "$identity" ]]; then
+    xcrun notarytool history --keychain-profile "$profile" >/dev/null 2>&1 || {
+        echo "No notarytool profile \"$profile\". Create it once with:" >&2
+        echo "  xcrun notarytool store-credentials $profile --apple-id <apple id> --team-id <team id>" >&2
+        exit 1
+    }
+    echo "Signing with $identity"
+else
+    echo "No Developer ID Application certificate: signing ad hoc, not notarizing."
+fi
 
 xcodegen generate --quiet
 xcodebuild -project AnkiDesk.xcodeproj -scheme AnkiDesk -configuration Release \
     -destination 'generic/platform=macOS' -derivedDataPath build -quiet build
 
 app="$products/AnkiDesk.app"
+# The hardened runtime is required for notarization; the app needs no entitlements under it.
+if [[ -n "$identity" ]]; then
+    codesign --force --options runtime --timestamp --sign "$identity" "$app"
+else
+    codesign --force --options runtime --sign - "$app"
+fi
 codesign --verify --deep --strict "$app"
 lipo -archs "$app/Contents/MacOS/AnkiDesk"
 
@@ -32,19 +56,28 @@ ditto "$stage" "$mount"
 hdiutil detach "$mount" -force -quiet
 hdiutil convert "$rw" -format UDZO -imagekey zlib-level=9 -quiet -o "$dmg"
 rm -f "$rw"
+
+if [[ -n "$identity" ]]; then
+    codesign --sign "$identity" --timestamp "$dmg"
+    # Notarizing the DMG also notarizes the app inside it; stapling lets it open offline.
+    xcrun notarytool submit "$dmg" --keychain-profile "$profile" --wait
+    xcrun stapler staple "$dmg"
+    spctl --assess --type open --context context:primary-signature --verbose "$dmg"
+fi
 echo "Built $dmg (v$version, $(du -h "$dmg" | cut -f1))"
 
 if [[ "${1:-}" == "--publish" ]]; then
+    if [[ -n "$identity" ]]; then
+        first_launch=""
+    else
+        first_launch="
+Anki Desk isn't notarized, so macOS blocks the first launch. Open it once, then go to
+System Settings › Privacy & Security and click **Open Anyway**.
+"
+    fi
     gh release create "v$version" "$dmg" --title "Anki Desk $version" --notes-file - <<EOF
 Download **AnkiDesk.dmg**, open it, and drag Anki Desk to Applications.
-
-Anki Desk isn't notarized yet, so macOS blocks the first launch. Open it once, then go to
-System Settings › Privacy & Security and click **Open Anyway**. Or run:
-
-\`\`\`bash
-xattr -dr com.apple.quarantine /Applications/AnkiDesk.app
-\`\`\`
-
+$first_launch
 Needs macOS 14 or later, and Anki with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on.
 EOF
 fi

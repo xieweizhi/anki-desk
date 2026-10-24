@@ -22,6 +22,9 @@ The menu bar icon has Settings and a How to Use guide.
 
 To build it yourself (Xcode 26+, [XcodeGen](https://github.com/yonaskolb/XcodeGen)): `scripts/release.sh` writes `build/AnkiDesk.dmg`;
 `scripts/release.sh --publish` also creates the GitHub release for the version in `project.yml`.
+With a Developer ID Application certificate in the keychain, the script signs, notarizes and staples the DMG.
+Notarization needs a keychain profile, made once with an [app-specific password](https://account.apple.com):
+`xcrun notarytool store-credentials anki-desk --apple-id <apple id> --team-id <team id>`.
 The website is `site/public/`, served by Cloudflare Workers Static Assets: `cd site && npx wrangler deploy`.
 
 ## License
