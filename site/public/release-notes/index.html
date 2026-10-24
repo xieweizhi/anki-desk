@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release notes · Anki Desk</title>
+<meta name="description" content="Every Anki Desk release, newest first, with what changed and a download for each.">
+<meta property="og:title" content="Anki Desk release notes">
+<meta property="og:image" content="/img/og.png">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+  .intro { padding: 40px 0 24px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  h1 { font: 400 clamp(40px, 5.5vw, 60px)/1.05 var(--serif); letter-spacing: -0.025em; margin: 0 0 16px; }
+  .lede { font-size: 19px; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+
+  .list { padding: 24px 0 88px; }
+  .release {
+    display: grid; grid-template-columns: 200px 1fr; gap: 32px;
+    padding: 32px 0; border-top: 1px solid var(--line);
+  }
+  .release:last-child { border-bottom: 1px solid var(--line); }
+  .version { font: 400 34px/1.1 var(--serif); letter-spacing: -0.02em; margin: 0; }
+  .date { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .badge {
+    display: inline-block; margin-top: 10px; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .02em;
+    background: color-mix(in srgb, var(--review) 14%, transparent); color: var(--review);
+  }
+  .notes ul { margin: 0 0 18px; padding-left: 20px; }
+  .notes li { margin: 0 0 6px; }
+  .notes p { margin: 0 0 18px; }
+  .notes .none { color: var(--muted); }
+  .notes code { font: 500 14px var(--mono); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+  .links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; font-size: 15px; }
+  .links .btn { padding: 9px 16px; font-size: 15px; }
+  .links .btn svg { width: 16px; height: 16px; }
+  .links a.plain { color: var(--muted); }
+  .links a.plain:hover { color: var(--ink); }
+
+  .state { padding: 32px 0; border-top: 1px solid var(--line); color: var(--muted); }
+  .state button {
+    font: 600 15px var(--sans); color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer; margin-right: 12px;
+  }
+  .skeleton { display: grid; gap: 10px; max-width: 520px; }
+  .skeleton span { display: block; height: 14px; border-radius: 7px; background: var(--line); }
+  .skeleton span:nth-child(1) { width: 40%; height: 26px; }
+  .skeleton span:nth-child(3) { width: 75%; }
+
+  @media (max-width: 720px) {
+    .release { grid-template-columns: 1fr; gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <img src="/img/icon.png" width="36" height="36" alt="">
+      Anki Desk
+    </a>
+    <nav>
+      <a class="hide-sm" href="/#features">Features</a>
+      <a class="hide-sm" href="/#setup">Setup</a>
+      <a href="/release-notes/" aria-current="page">Release notes</a>
+      <a href="https://github.com/xieweizhi/anki-desk">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <div class="wrap">
+      <p class="eyebrow">Anki Desk</p>
+      <h1>Release notes</h1>
+      <p class="lede">Every version, newest first, each a DMG for macOS 14 or later. From 0.1.2 on, releases are signed and notarized by Apple.</p>
+      <a class="btn" href="/download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+        Download the latest
+      </a>
+    </div>
+  </div>
+
+  <div class="list">
+    <div class="wrap" id="releases" aria-live="polite">
+      <div class="state" id="loading">
+        <div class="skeleton" aria-label="Loading releases"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Anki Desk · MIT License · Not affiliated with Anki or AnkiWeb.</span>
+    <span><a href="https://github.com/xieweizhi/anki-desk/releases">Releases on GitHub</a></span>
+  </div>
+</footer>
+
+<script>
+  const REPO = "xieweizhi/anki-desk";
+  const list = document.getElementById("releases");
+  const DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
+
+  const escape = (text) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+  // Release notes are short Markdown: "- " lists, **bold**, `code` and [links](https://...).
+  function inline(text) {
+    return escape(text)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  // Only the list of changes: the install lines repeat on every release.
+  function changes(body) {
+    const items = (body || "").split("\n").map((l) => l.trim()).filter((l) => /^[-*] /.test(l)).map((l) => l.slice(2));
+    if (!items.length) return '<p class="none">No list of changes for this release.</p>';
+    return "<ul>" + items.map((i) => `<li>${inline(i)}</li>`).join("") + "</ul>";
+  }
+
+  const day = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" });
+  const size = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+  function render(releases) {
+    const shown = releases.filter((r) => !r.draft);
+    if (!shown.length) {
+      list.innerHTML = '<div class="state">No releases yet. <a href="https://github.com/' + REPO + '">Build it from source</a> in the meantime.</div>';
+      return;
+    }
+    const latest = shown.find((r) => !r.prerelease);
+    list.innerHTML = shown.map((r) => {
+      const dmg = r.assets.find((a) => a.name.endsWith(".dmg"));
+      const version = escape(r.tag_name.replace(/^v/, ""));
+      const badge = r === latest ? '<span class="badge">Latest</span>' : r.prerelease ? '<span class="badge">Pre-release</span>' : "";
+      return `<article class="release" id="${escape(r.tag_name)}">
+        <div>
+          <h2 class="version">${version}</h2>
+          <div class="date"><time datetime="${escape(r.published_at)}">${day.format(new Date(r.published_at))}</time></div>
+          ${badge}
+        </div>
+        <div class="notes">
+          ${changes(r.body)}
+          <div class="links">
+            ${dmg ? `<a class="btn" href="${escape(dmg.browser_download_url)}">${DOWNLOAD_ICON}Download ${version} · ${size(dmg.size)}</a>` : ""}
+            <a class="plain" href="${escape(r.html_url)}">View on GitHub</a>
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
+  function fail() {
+    list.innerHTML = `<div class="state">
+      <p>Couldn't load the releases from GitHub. You may be offline, or GitHub may be limiting requests for a while.</p>
+      <button type="button" id="retry">Try again</button>
+      <a href="https://github.com/${REPO}/releases">See them on GitHub</a>
+    </div>`;
+    document.getElementById("retry").addEventListener("click", load);
+  }
+
+  function load() {
+    list.innerHTML = '<div class="state"><div class="skeleton" aria-label="Loading releases"><span></span><span></span><span></span></div></div>';
+    fetch(`https://api.github.com/repos/${REPO}/releases?per_page=50`, { headers: { Accept: "application/vnd.github+json" } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(render)
+      .catch(fail);
+  }
+
+  load();
+</script>
+</body>
+</html>

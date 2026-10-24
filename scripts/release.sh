@@ -9,7 +9,8 @@
 #   NOTARY_PROFILE  notarytool keychain profile (default: anki-desk), made once with `xcrun notarytool store-credentials`
 #   NOTARY_APPLE_ID, NOTARY_TEAM_ID, NOTARY_PASSWORD
 #                   notarize with these instead of a keychain profile (used by .github/workflows/release.yml)
-#   RELEASE_TAG     the tag being released; must be v<MARKETING_VERSION>
+#   RELEASE_TAG     the tag being released; must be v<MARKETING_VERSION>. An annotated tag's message becomes
+#                   the release notes' list of changes.
 # On CI (CI is set) a missing Developer ID is an error rather than an ad hoc build.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -92,8 +93,15 @@ Anki Desk isn't notarized, so macOS blocks the first launch. Open it once, then 
 System Settings › Privacy & Security and click **Open Anyway**.
 "
     fi
+    # An annotated tag's message lists what changed (git tag -a v1.2.3 -m "- Fixes ..."). A lightweight tag adds nothing.
+    changes=""
+    if [[ "$(git cat-file -t "v$version" 2>/dev/null)" == "tag" ]]; then
+        changes="$(git tag -l --format='%(contents)' "v$version" | sed '/^-----BEGIN PGP SIGNATURE-----/,$d')
+
+"
+    fi
     gh release create "v$version" "$dmg" --title "Anki Desk $version" --notes-file - <<EOF
-Download **AnkiDesk.dmg**, open it, and drag Anki Desk to Applications.
+${changes}Download **AnkiDesk.dmg**, open it, and drag Anki Desk to Applications.
 $first_launch
 Needs macOS 14 or later, and Anki with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on.
 EOF
