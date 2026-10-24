@@ -33,6 +33,24 @@ struct CountingTests {
         #expect(Counting.totals(Counting.reviewed(decks, selected: [1, 3], only: 3)) == Totals(new: 8, learn: 0, review: 22))
     }
 
+    @Test func subdecksNestUnderTheirParent() {
+        let tree = DeckNode.tree(decks)
+        #expect(tree.map(\.id) == [1, 3, 4])
+        #expect(tree[0].children.map(\.id) == [2])
+        #expect(tree[0].children[0].shortName == "Core 2k")
+        #expect(tree[1].children.isEmpty)
+    }
+
+    @Test func deckWithoutItsParentStaysAtTheTop() {
+        let orphan = DeckStats(id: 5, name: "French::Verbs::Irregular", newCount: 0, learnCount: 0, reviewCount: 0)
+        let french = DeckStats(id: 6, name: "French", newCount: 0, learnCount: 0, reviewCount: 0)
+        #expect(DeckNode.tree([orphan]).map(\.id) == [5])
+        // With only the grandparent present, the deck goes under it.
+        let tree = DeckNode.tree([french, orphan])
+        #expect(tree.map(\.id) == [6])
+        #expect(tree[0].descendants.map(\.id) == [5])
+    }
+
     @Test func labelUsesArrows() {
         #expect(decks[1].label == "Japanese › Core 2k")
     }

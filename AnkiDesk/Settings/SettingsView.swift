@@ -5,6 +5,8 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     var openHowTo: () -> Void = {}
     @State private var openAtLogin = false
+    /// Decks whose subdecks are showing. Groups start collapsed.
+    @State private var expanded: Set<Int64> = []
 
     var body: some View {
         @Bindable var prefs = model.prefs
@@ -14,16 +16,8 @@ struct SettingsView: View {
                     Text(model.connection == .unreachable ? "Open Anki to load your decks." : "Loading decks…")
                         .foregroundStyle(.secondary)
                 }
-                ForEach(model.decks) { deck in
-                    Toggle(isOn: selection(deck.id)) {
-                        HStack {
-                            Text(deck.name.components(separatedBy: "::").last ?? deck.name)
-                                .padding(.leading, CGFloat(deck.name.components(separatedBy: "::").count - 1) * 14)
-                            Spacer()
-                            Text("\(deck.due) due").foregroundStyle(.secondary).monospacedDigit()
-                        }
-                    }
-                    .toggleStyle(.switch)
+                ForEach(visibleRows(DeckNode.tree(model.decks)), id: \.node.id) { row in
+                    deckRow(row.node, depth: row.depth)
                 }
             } header: {
                 HStack {
@@ -123,6 +117,51 @@ struct SettingsView: View {
         case .synced(let date): "Last synced at \(date.formatted(date: .omitted, time: .shortened))"
         case .failed(let message): message
         }
+    }
+
+    /// The decks to list: each top-level deck, and the subdecks of the groups that are open.
+    private func visibleRows(_ nodes: [DeckNode], depth: Int = 0) -> [(node: DeckNode, depth: Int)] {
+        nodes.flatMap { node in
+            [(node, depth)] + (expanded.contains(node.id) ? visibleRows(node.children, depth: depth + 1) : [])
+        }
+    }
+
+    /// A deck's switch, behind an arrow that opens or closes its subdecks.
+    private func deckRow(_ node: DeckNode, depth: Int) -> some View {
+        let open = expanded.contains(node.id)
+        return HStack(spacing: 6) {
+            if node.children.isEmpty {
+                Color.clear.frame(width: 14)
+            } else {
+                Button {
+                    if open { expanded.remove(node.id) } else { expanded.insert(node.id) }
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(open ? 90 : 0))
+                        .frame(width: 14, height: 20)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(open ? "Hide subdecks" : "Show subdecks")
+            }
+            Toggle(isOn: selection(node.id)) {
+                HStack {
+                    Text(node.shortName)
+                    Spacer()
+                    if !node.children.isEmpty && !open {
+                        let picked = node.descendants.filter { model.prefs.selectedDecks.contains($0.id) }.count
+                        if picked > 0 {
+                            Text(picked == 1 ? "1 subdeck on" : "\(picked) subdecks on").foregroundStyle(.secondary)
+                        }
+                    }
+                    Text("\(node.deck.due) due").foregroundStyle(.secondary).monospacedDigit()
+                }
+            }
+            .toggleStyle(.switch)
+        }
+        .padding(.leading, CGFloat(depth) * 20)
     }
 
     private func selection(_ id: Int64) -> Binding<Bool> {
