@@ -64,7 +64,8 @@ struct ReviewView: View {
     }
 
     @ViewBuilder private func cardBody(_ card: ReviewSession.Card) -> some View {
-        CardWebView(html: review.html, mediaDirectory: review.mediaDirectory, theme: theme, height: $cardHeight) { side, index in
+        CardWebView(html: review.html, mediaDirectory: review.mediaDirectory, theme: theme,
+                    zoom: model.prefs.cardTextSize.zoom, height: $cardHeight) { side, index in
             review.play(side: side, index: index)
         }
         .frame(height: cardHeight)
@@ -125,6 +126,19 @@ struct ReviewView: View {
             .keyboardShortcut("r", modifiers: [])
             .accessibilityLabel(review.audio.isPlaying ? "Pause audio" : "Play audio")
             Waveform(progress: review.audio.progress, lit: theme.new, dim: theme.muted.opacity(0.45))
+            Button {
+                model.prefs.audioSpeed = AudioSpeed.next(after: model.prefs.audioSpeed)
+                review.audio.rate = Float(model.prefs.audioSpeed)
+            } label: {
+                Text(AudioSpeed.label(model.prefs.audioSpeed))
+                    .font(theme.text(11, weight: .semibold)).monospacedDigit()
+                    .padding(.horizontal, 7).frame(height: 22)
+                    .background(theme.foreground.opacity(0.1), in: Capsule())
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .help("Playback speed")
+            .accessibilityLabel("Playback speed \(AudioSpeed.label(model.prefs.audioSpeed))")
             Text(review.duration ?? "").font(theme.text(11)).foregroundStyle(theme.muted).monospacedDigit()
         }
         .padding(.leading, 6)

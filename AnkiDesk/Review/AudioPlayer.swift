@@ -7,6 +7,10 @@ final class AudioPlayer {
     private(set) var isPlaying = false
     /// 0...1 across the whole queue.
     private(set) var progress: Double = 0
+    /// Playback speed; the pitch stays the same.
+    var rate: Float = 1 {
+        didSet { if isPlaying { player?.rate = rate } }
+    }
 
     private var player: AVPlayer?
     private var queue: [URL] = []
@@ -44,7 +48,9 @@ final class AudioPlayer {
             return
         }
         let item = AVPlayerItem(url: queue[index])
+        item.audioTimePitchAlgorithm = .spectral
         let player = AVPlayer(playerItem: item)
+        player.defaultRate = rate
         timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.05, preferredTimescale: 600), queue: .main) { [weak self] time in
             MainActor.assumeIsolated { self?.tick(time: time, item: item) }
         }

@@ -18,6 +18,34 @@ enum WindowLevel: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// How large a card's text shows in the widget, relative to the card's own styling.
+enum TextSize: String, CaseIterable, Identifiable {
+    case small, standard, large, larger
+    var id: String { rawValue }
+
+    var zoom: Double {
+        switch self {
+        case .small: 0.85
+        case .standard: 1
+        case .large: 1.2
+        case .larger: 1.4
+        }
+    }
+}
+
+/// Playback speeds for a card's audio, in the order the speed button steps through them.
+enum AudioSpeed {
+    static let all: [Double] = [0.5, 0.75, 1, 1.25, 1.5]
+
+    static func next(after speed: Double) -> Double {
+        all.first { $0 > speed } ?? all[0]
+    }
+
+    static func label(_ speed: Double) -> String {
+        "\(speed.formatted(.number.precision(.fractionLength(0...2))))×"
+    }
+}
+
 extension KeyboardShortcuts.Name {
     static let toggleWidget = Self("toggleWidget", default: .init(.a, modifiers: [.control, .option]))
 }
@@ -37,6 +65,8 @@ final class Preferences {
     var clickThrough: Bool { didSet { store.set(clickThrough, forKey: "clickThrough") } }
     var autoplayAudio: Bool { didSet { store.set(autoplayAudio, forKey: "autoplayAudio") } }
     var finishedSetup: Bool { didSet { store.set(finishedSetup, forKey: "finishedSetup") } }
+    var audioSpeed: Double { didSet { store.set(audioSpeed, forKey: "audioSpeed") } }
+    var cardTextSize: TextSize { didSet { store.set(cardTextSize.rawValue, forKey: "cardTextSize") } }
     var openAnkiOnStart: Bool { didSet { store.set(openAnkiOnStart, forKey: "openAnkiOnStart") } }
 
     init(store: UserDefaults = .standard) {
@@ -51,6 +81,8 @@ final class Preferences {
         clickThrough = store.bool(forKey: "clickThrough")
         autoplayAudio = store.object(forKey: "autoplayAudio") as? Bool ?? true
         finishedSetup = store.bool(forKey: "finishedSetup")
+        audioSpeed = (store.object(forKey: "audioSpeed") as? Double).flatMap { AudioSpeed.all.contains($0) ? $0 : nil } ?? 1
+        cardTextSize = store.string(forKey: "cardTextSize").flatMap(TextSize.init) ?? .standard
         openAnkiOnStart = store.object(forKey: "openAnkiOnStart") as? Bool ?? true
     }
 

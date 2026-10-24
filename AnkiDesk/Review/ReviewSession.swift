@@ -28,6 +28,7 @@ final class ReviewSession {
 
     init(model: AppModel) {
         self.model = model
+        audio.rate = Float(model.prefs.audioSpeed)
     }
 
     // MARK: Current side

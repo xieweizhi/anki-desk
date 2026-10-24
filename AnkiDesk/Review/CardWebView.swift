@@ -7,6 +7,8 @@ struct CardWebView: NSViewRepresentable {
     let html: String
     let mediaDirectory: URL?
     let theme: Theme
+    /// Scales the whole card, text and images, as zooming a web page does.
+    var zoom: Double = 1
     @Binding var height: CGFloat
     let onPlay: (Character, Int) -> Void
 
@@ -34,8 +36,9 @@ struct CardWebView: NSViewRepresentable {
         context.coordinator.parent = self
         context.coordinator.media.directory = mediaDirectory
         let document = Self.document(html, theme: theme)
-        if context.coordinator.loaded != document {
+        if context.coordinator.loaded != document || web.pageZoom != zoom {
             context.coordinator.loaded = document
+            web.pageZoom = zoom
             web.loadHTMLString(document, baseURL: URL(string: "\(Self.mediaScheme)://media/"))
         }
     }
@@ -80,8 +83,9 @@ struct CardWebView: NSViewRepresentable {
         }
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            if let h = message.body as? Double { parent.height = min(max(h, 60), 420) }
-            else if let h = message.body as? Int { parent.height = min(max(CGFloat(h), 60), 420) }
+            // The page reports its height in CSS pixels, before the zoom.
+            let h = (message.body as? Double) ?? (message.body as? Int).map(Double.init)
+            if let h { parent.height = min(max(h * parent.zoom, 60), 420) }
         }
     }
 }

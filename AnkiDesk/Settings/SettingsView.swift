@@ -75,6 +75,13 @@ struct SettingsView: View {
                     Text("On desktop").tag(WindowLevel.desktop)
                 }
                 .pickerStyle(.segmented)
+                Picker("Card text", selection: $prefs.cardTextSize) {
+                    Text("Small").tag(TextSize.small)
+                    Text("Default").tag(TextSize.standard)
+                    Text("Large").tag(TextSize.large)
+                    Text("Larger").tag(TextSize.larger)
+                }
+                .pickerStyle(.segmented)
                 Toggle("Show count in menu bar", isOn: $prefs.showCountInMenuBar)
                 Toggle("Open Anki when Anki Desk starts", isOn: $prefs.openAnkiOnStart)
                 Toggle("Open at login", isOn: $openAtLogin)
