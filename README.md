@@ -14,7 +14,6 @@ Today's Anki cards, right on your Mac desktop. **[anki-desk.dou-tech.workers.dev
 ## Install
 
 1. Download **[AnkiDesk.dmg](https://github.com/xieweizhi/anki-desk/releases/latest/download/AnkiDesk.dmg)** and drag Anki Desk to Applications (macOS 14+).
-   It isn't notarized yet: on first launch, open System Settings › Privacy & Security and click **Open Anyway**.
 2. In Anki, install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) (Tools › Add-ons › Get Add-ons, code `2055492159`) and restart Anki.
 
 Keep Anki open in the background. There's no account: Anki Desk talks to Anki on `127.0.0.1:8765`.
