@@ -1,0 +1,8 @@
+// The landing page: static files only, served by Workers Static Assets (no Worker script).
+{
+  "name": "anki-desk",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public"
+  }
+}

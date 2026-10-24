@@ -1,6 +1,6 @@
 # Anki Desk
 
-Today's Anki cards, right on your Mac desktop.
+Today's Anki cards, right on your Mac desktop. **[anki-desk.dou-tech.workers.dev](https://anki-desk.dou-tech.workers.dev)**
 
 ![Anki Desk widgets in four themes](docs/screenshot.png)
 
@@ -22,6 +22,7 @@ The menu bar icon has Settings and a How to Use guide.
 
 To build it yourself (Xcode 26+, [XcodeGen](https://github.com/yonaskolb/XcodeGen)): `scripts/release.sh` writes `build/AnkiDesk.dmg`;
 `scripts/release.sh --publish` also creates the GitHub release for the version in `project.yml`.
+The website is `site/public/`, served by Cloudflare Workers Static Assets: `cd site && npx wrangler deploy`.
 
 ## License
 

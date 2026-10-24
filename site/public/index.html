@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anki Desk · Today's Anki cards on your Mac desktop</title>
+<meta name="description" content="A small macOS widget that shows how many Anki cards you have left today, lets you review them in place, and keeps AnkiWeb in sync. Free and open source.">
+<meta property="og:title" content="Anki Desk">
+<meta property="og:description" content="Today's Anki cards, right on your Mac desktop.">
+<meta property="og:image" content="/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1c1b19;
+    --muted: #6b665e;
+    --line: rgba(28, 27, 25, 0.10);
+    --paper: #f7f4ee;
+    --card: #fffdf9;
+    --new: #2563c9;
+    --learn: #c2410c;
+    --review: #2e7d4f;
+    --dusk-1: #9db0c2;
+    --dusk-2: #6f8499;
+    --dusk-3: #53687e;
+    --dusk-4: #3d4f63;
+    --radius: 20px;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --serif: "Newsreader", "New York", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 17px/1.55 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; height: auto; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  header { padding: 20px 0; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; letter-spacing: -0.01em; }
+  .brand img { width: 36px; height: 36px; margin: -4px; }
+  nav { display: flex; gap: 22px; font-size: 15px; }
+  nav a { text-decoration: none; color: var(--muted); }
+  nav a:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero { padding: 40px 0 72px; }
+  .hero .wrap { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: center; }
+  h1 {
+    font: 400 clamp(44px, 6vw, 72px)/1.02 var(--serif);
+    letter-spacing: -0.025em;
+    margin: 0 0 20px;
+  }
+  h1 em { font-style: italic; color: var(--review); }
+  .lede { font-size: 20px; color: var(--muted); margin: 0 0 32px; max-width: 30em; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px; border-radius: 999px;
+    background: var(--ink); color: var(--paper);
+    font-weight: 600; text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 0 rgba(255,255,255,.15) inset, 0 8px 20px -8px rgba(28,27,25,.5);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.15) inset, 0 12px 26px -10px rgba(28,27,25,.55); }
+  .btn svg { width: 18px; height: 18px; }
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .meta { font-size: 14px; color: var(--muted); }
+
+  /* The desktop */
+  .desk {
+    position: relative;
+    aspect-ratio: 5 / 4.2;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--dusk-1);
+    box-shadow: 0 30px 60px -30px rgba(28, 37, 52, .55), 0 0 0 1px rgba(28,27,25,.06);
+  }
+  .desk::before, .desk::after, .desk .hill {
+    content: ""; position: absolute; border-radius: 50%;
+  }
+  .desk::before { width: 150%; height: 70%; left: -40%; top: 62%; background: var(--dusk-2); }
+  .desk .hill { width: 120%; height: 70%; left: 30%; top: 72%; background: var(--dusk-3); }
+  .desk::after { width: 110%; height: 70%; left: -45%; top: 80%; background: var(--dusk-4); }
+  .menubar {
+    position: absolute; inset: 0 0 auto 0; z-index: 2;
+    height: 30px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+    background: rgba(255,255,255,.28);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    font-size: 13px; font-weight: 500; color: #1d2733;
+  }
+  .menubar .count { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.35); }
+  .menubar .count svg { width: 14px; height: 14px; }
+  .widget {
+    position: absolute; z-index: 1;
+    left: 50%; top: 52%;
+    width: 64%;
+    transform: translate(-50%, -50%);
+  }
+  .widget img { width: 100%; transition: opacity .2s ease; }
+  .themes {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; justify-content: center;
+  }
+  .themes button {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px 7px 8px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card);
+    font: 500 14px var(--sans); color: var(--ink); cursor: pointer;
+  }
+  .themes button[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .themes .sw { width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .themes button:focus-visible, .btn:focus-visible, .copy:focus-visible { outline: 2px solid var(--new); outline-offset: 2px; }
+
+  /* Sections */
+  section { padding: 72px 0; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  h2 { font: 400 clamp(32px, 4vw, 44px)/1.1 var(--serif); letter-spacing: -0.02em; margin: 0 0 40px; max-width: 18em; }
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .feature { background: var(--card); padding: 28px; }
+  .feature svg { width: 26px; height: 26px; color: var(--review); margin-bottom: 16px; }
+  .feature h3 { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+  .feature p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .sizes {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 48px;
+    margin-top: 56px; padding: 32px 16px 8px; border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--dusk-1), var(--dusk-2));
+  }
+  .sizes figure { margin: 0; }
+  .sizes figcaption { font-size: 14px; font-weight: 500; color: #fff; text-align: center; margin: -36px 0 28px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: step; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; position: relative; }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--ink); color: var(--paper); font: 500 17px var(--serif); margin-bottom: 18px;
+  }
+  .step h3 { font-size: 17px; margin: 0 0 8px; }
+  .step p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+  .step p:last-child { margin-bottom: 0; }
+  .code {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 15px var(--mono); background: var(--paper); border: 1px solid var(--line);
+    border-radius: 10px; padding: 6px 6px 6px 12px;
+  }
+  .copy { font: 500 13px var(--sans); border: 0; background: var(--ink); color: var(--paper); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
+  .note { font-size: 14px; color: var(--muted); }
+
+  .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 48px; }
+  details { border-top: 1px solid var(--line); padding: 18px 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+  details[open] summary::after { content: "–"; }
+  details p { color: var(--muted); margin: 10px 0 0; font-size: 15px; }
+
+  .closing { text-align: center; padding: 88px 0 96px; }
+  .closing h2 { margin: 0 auto 28px; }
+  .closing .cta { justify-content: center; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 14px; color: var(--muted); }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+  @media (max-width: 880px) {
+    .hero .wrap { grid-template-columns: 1fr; gap: 40px; }
+    .features, .steps { grid-template-columns: 1fr; }
+    .sizes, .faq { grid-template-columns: 1fr; }
+    nav a.hide-sm { display: none; }
+    section { padding: 56px 0; }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 0 16px; }
+    .desk { aspect-ratio: 1 / 1.08; }
+    .widget { width: 80%; top: 54%; }
+    .lede { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <img src="/img/icon.png" width="36" height="36" alt="">
+      Anki Desk
+    </a>
+    <nav>
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#setup">Setup</a>
+      <a href="https://github.com/xieweizhi/anki-desk">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Today's Anki cards, <em>right on your desktop.</em></h1>
+        <p class="lede">A small Mac widget that shows how many cards you have left, lets you review them in place, and keeps AnkiWeb in sync.</p>
+        <div class="cta">
+          <a class="btn" href="/download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+            Download for Mac
+          </a>
+          <span class="meta"><span data-version>Latest release</span> · macOS 14+ · Free and open source</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="desk" role="img" aria-label="The Anki Desk widget on a Mac desktop">
+          <div class="hill"></div>
+          <div class="menubar">
+            <span class="count">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>164
+            </span>
+            <span>Fri 9:41</span>
+          </div>
+          <div class="widget"><img id="hero-widget" src="/img/widget-midnight-medium.png" width="380" height="404" alt=""></div>
+        </div>
+        <div class="themes" role="group" aria-label="Theme">
+          <button type="button" data-theme="paper" aria-pressed="false"><span class="sw" style="background:#f7f4ee"></span>Paper</button>
+          <button type="button" data-theme="midnight" aria-pressed="true"><span class="sw" style="background:#181a21"></span>Midnight</button>
+          <button type="button" data-theme="matcha" aria-pressed="false"><span class="sw" style="background:#e4ebdc"></span>Matcha</button>
+          <button type="button" data-theme="terminal" aria-pressed="false"><span class="sw" style="background:#0c110d"></span>Terminal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <p class="eyebrow">What it does</p>
+      <h2>Your daily count stays in view, so a few spare minutes turn into reviews.</h2>
+      <div class="features">
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M6 3h12"/></svg>
+          <h3>Cards left, per deck</h3>
+          <p>Pick the decks you care about. New, learning and review are counted the way Anki counts them.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>
+          <h3>Review in place</h3>
+          <p>Images and audio included. Space shows the answer, 1–4 grade it, and the grade goes to Anki's own scheduler.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></svg>
+          <h3>Syncs on its own</h3>
+          <p>Every 15 minutes, through Anki and your AnkiWeb login. No new account.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+          <h3>⌃⌥A from any app</h3>
+          <p>One shortcut brings the widget forward and back. Change it in Settings.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="12" height="12" rx="2"/><rect x="9" y="9" width="12" height="12" rx="2"/></svg>
+          <h3>On top or on the desktop</h3>
+          <p>Drag it anywhere. Keep it above every window, as a normal window, or down with your desktop icons.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2"/></svg>
+          <h3>4 themes, 3 sizes</h3>
+          <p>Paper, Midnight, Matcha and Terminal. Full, compact, or a slim pill. The count also sits in the menu bar.</p>
+        </div>
+      </div>
+
+      <div class="sizes">
+        <figure>
+          <img data-size="small" src="/img/widget-midnight-small.png" width="252" height="244" alt="The small widget">
+          <figcaption>Small</figcaption>
+        </figure>
+        <figure>
+          <img data-size="pill" src="/img/widget-midnight-pill.png" width="400" height="120" alt="The pill widget">
+          <figcaption>Pill</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup">
+    <div class="wrap">
+      <p class="eyebrow">Setup</p>
+      <h2>Three steps, and no account.</h2>
+      <div class="steps">
+        <div class="step">
+          <h3>Download Anki Desk</h3>
+          <p>Open the DMG and drag Anki Desk to Applications.</p>
+          <p class="note">Anki Desk isn't notarized yet. The first time, open it, then go to System Settings › Privacy &amp; Security and click <b>Open Anyway</b>.</p>
+        </div>
+        <div class="step">
+          <h3>Add AnkiConnect to Anki</h3>
+          <p>In Anki: Tools › Add-ons › Get Add-ons, paste this code, then restart Anki.</p>
+          <span class="code"><span id="addon-code">2055492159</span><button class="copy" type="button" data-copy="2055492159">Copy</button></span>
+        </div>
+        <div class="step">
+          <h3>Keep Anki open</h3>
+          <p>Anki Desk talks to Anki on your Mac (127.0.0.1:8765). Leave Anki running in the background and pick your decks in Settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Questions</p>
+      <div class="faq">
+        <details>
+          <summary>Do I need an account?</summary>
+          <p>No. Anki Desk reads from the Anki app on your Mac. Sync uses the AnkiWeb login you already have in Anki.</p>
+        </details>
+        <details>
+          <summary>Will it change my scheduling?</summary>
+          <p>Only when you review. Each grade goes to Anki's own scheduler, exactly as if you'd answered in Anki.</p>
+        </details>
+        <details>
+          <summary>Why does macOS warn me when I open it?</summary>
+          <p>The app isn't notarized by Apple yet. Use Open Anyway in Privacy &amp; Security once, or build it yourself from the source on GitHub.</p>
+        </details>
+        <details>
+          <summary>What if Anki is closed?</summary>
+          <p>The widget shows the last count it saw and a button to open Anki. It picks up again as soon as Anki is running.</p>
+        </details>
+        <details>
+          <summary>Which Macs does it run on?</summary>
+          <p>macOS 14 Sonoma or later, on Apple silicon and Intel.</p>
+        </details>
+        <details>
+          <summary>Is it affiliated with Anki?</summary>
+          <p>No. It's an independent, MIT-licensed app that works with Anki through the AnkiConnect add-on.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <div class="closing">
+    <div class="wrap">
+      <h2>Keep today's cards where you can see them.</h2>
+      <div class="cta">
+        <a class="btn" href="/download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+          Download for Mac
+        </a>
+        <a class="btn ghost" href="https://github.com/xieweizhi/anki-desk">View on GitHub</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Anki Desk · MIT License · Not affiliated with Anki or AnkiWeb.</span>
+    <span><a href="https://github.com/xieweizhi/anki-desk/releases">All releases</a></span>
+  </div>
+</footer>
+
+<script>
+  // Theme switcher: swaps in the widgets rendered from the app's own views.
+  const hero = document.getElementById("hero-widget");
+  const sized = document.querySelectorAll("[data-size]");
+  const buttons = document.querySelectorAll("[data-theme]");
+  buttons.forEach((button) => {
+    const theme = button.dataset.theme;
+    new Image().src = `/img/widget-${theme}-medium.png`;
+    button.addEventListener("click", () => {
+      buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      hero.src = `/img/widget-${theme}-medium.png`;
+      sized.forEach((img) => (img.src = `/img/widget-${theme}-${img.dataset.size}.png`));
+    });
+  });
+
+  // Copy the AnkiConnect code.
+  document.querySelectorAll("[data-copy]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy);
+        button.textContent = "Copied";
+        setTimeout(() => (button.textContent = "Copy"), 1600);
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById("addon-code"));
+        getSelection().removeAllRanges();
+        getSelection().addRange(range);
+      }
+    });
+  });
+
+  // Show the latest release's version; the page reads fine without it.
+  fetch("https://api.github.com/repos/xieweizhi/anki-desk/releases/latest")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((release) => {
+      if (!release?.tag_name) return;
+      document.querySelectorAll("[data-version]").forEach((el) => (el.textContent = release.tag_name));
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
