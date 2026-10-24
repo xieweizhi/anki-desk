@@ -20,11 +20,12 @@ enum WindowLevel: String, CaseIterable, Identifiable {
 
 /// How large a card's text shows in the widget, relative to the card's own styling.
 enum TextSize: String, CaseIterable, Identifiable {
-    case small, standard, large, larger
+    case smaller, small, standard, large, larger
     var id: String { rawValue }
 
     var zoom: Double {
         switch self {
+        case .smaller: 0.7
         case .small: 0.85
         case .standard: 1
         case .large: 1.2

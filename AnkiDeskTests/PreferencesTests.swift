@@ -41,7 +41,7 @@ struct PreferencesTests {
 
     @Test func remembersCardTextSize() {
         let store = UserDefaults.testStore()
-        Preferences(store: store).cardTextSize = .larger
-        #expect(Preferences(store: store).cardTextSize == .larger)
+        Preferences(store: store).cardTextSize = .smaller
+        #expect(Preferences(store: store).cardTextSize == .smaller)
     }
 }

@@ -70,6 +70,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Picker("Card text", selection: $prefs.cardTextSize) {
+                    Text("Smaller").tag(TextSize.smaller)
                     Text("Small").tag(TextSize.small)
                     Text("Default").tag(TextSize.standard)
                     Text("Large").tag(TextSize.large)
