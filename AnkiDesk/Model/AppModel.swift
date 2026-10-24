@@ -32,7 +32,7 @@ final class AppModel {
     private var syncTask: Task<Void, Never>?
     private var lastSyncAttempt: Date?
 
-    static let ankiBundleIDs = ["net.ankiweb.launcher", "net.ankiweb.dtop"]
+    nonisolated static let ankiBundleIDs = ["net.ankiweb.launcher", "net.ankiweb.dtop"]
 
     init(prefs: Preferences) {
         self.prefs = prefs

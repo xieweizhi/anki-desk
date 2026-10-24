@@ -123,10 +123,16 @@ final class ReviewSession {
     private func buildQueue() async throws {
         var learn: [Int64] = [], review: [Int64] = [], new: [Int64] = []
         let active = "-is:suspended -is:buried"
+        // Take no more of each kind than Anki's counts, which apply the deck's daily limits. A search for
+        // is:due ignores them, and would keep serving a deck that Anki shows as done for today.
         for deck in model.counted {
             let d = Counting.deckQuery(deck.name)
-            learn += try await model.anki.findCards("\(d) is:due is:learn \(active)").sorted()
-            review += try await model.anki.findCards("\(d) is:due -is:learn \(active)").shuffled()
+            if deck.learnCount > 0 {
+                learn += try await model.anki.findCards("\(d) is:due is:learn \(active)").sorted().prefix(deck.learnCount)
+            }
+            if deck.reviewCount > 0 {
+                review += try await model.anki.findCards("\(d) is:due -is:learn \(active)").shuffled().prefix(deck.reviewCount)
+            }
             if deck.newCount > 0 {
                 new += try await model.anki.findCards("\(d) is:new \(active)").sorted().prefix(deck.newCount)
             }
