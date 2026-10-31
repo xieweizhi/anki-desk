@@ -85,7 +85,7 @@ struct SettingsView: View {
                         openAtLogin = prefs.openAtLogin
                     }
                 Toggle("Play audio automatically", isOn: $prefs.autoplayAudio)
-                Toggle("Focus mode (dim everything else during review)", isOn: $prefs.focusMode)
+                Toggle("Focus mode (dim and blur the desktop during review)", isOn: $prefs.focusMode)
                 Toggle("Click-through (ignore the mouse)", isOn: $prefs.clickThrough)
             } header: {
                 Text("Widget")

@@ -7,7 +7,7 @@ Today's Anki cards, right on your Mac desktop. **[anki-desk.dou-tech.workers.dev
 - Cards left today for the decks you pick, split into new, learning and review
 - Review in place with images and audio; grades go to Anki's own scheduler
 - Click a deck to review only that deck
-- Focus mode dims everything behind the widget during review (Settings › Widget, off by default)
+- Focus mode dims and blurs everything behind the widget during review (Settings › Widget, off by default)
 - Card text size (Settings › Widget) and audio speed from 0.5× to 1.5× (the button beside the audio)
 - Syncs with AnkiWeb on a timer, through Anki
 - Drag it anywhere; keep it on top, as a normal window, or on the desktop

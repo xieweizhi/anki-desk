@@ -1,12 +1,13 @@
 import AppKit
 
-/// Focus mode's dimmed background: a black window over each screen, behind the widget. It takes clicks,
+/// Focus mode's background: a blurred, darkened window over each screen, behind the widget. It takes clicks,
 /// so a stray one can't reach the apps behind it during a review.
 final class FocusDimmer {
     /// Above the menu bar and the Dock.
     static let level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
     static let widgetLevel = NSWindow.Level(rawValue: level.rawValue + 1)
-    private static let opacity = 0.65
+    /// How dark the black over the blur is.
+    private static let tint = 0.45
 
     private var windows: [NSWindow] = []
     private var isOn = false
@@ -25,7 +26,7 @@ final class FocusDimmer {
         isOn = on
         if on {
             cover(alpha: 0)
-            fade(to: Self.opacity)
+            fade(to: 1)
         } else {
             fade(to: 0) { [weak self] in
                 guard let self, !self.isOn else { return }
@@ -36,7 +37,7 @@ final class FocusDimmer {
 
     private func screensChanged() {
         guard isOn else { return }
-        cover(alpha: Self.opacity)
+        cover(alpha: 1)
     }
 
     private func cover(alpha: Double) {
@@ -63,7 +64,8 @@ final class FocusDimmer {
         let window = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.isOpaque = false
-        window.backgroundColor = .black
+        window.backgroundColor = .clear
+        window.contentView = blurView()
         window.alphaValue = alpha
         window.hasShadow = false
         window.level = level
@@ -71,5 +73,20 @@ final class FocusDimmer {
         window.setFrame(screen.frame, display: false)
         window.orderFrontRegardless()
         return window
+    }
+
+    /// Blurs what's behind the window, under a black tint. The dark appearance keeps the blur from washing out.
+    private static func blurView() -> NSView {
+        let blur = NSVisualEffectView()
+        blur.material = .hudWindow
+        blur.blendingMode = .behindWindow
+        blur.state = .active
+        blur.appearance = NSAppearance(named: .darkAqua)
+        let shade = NSView()
+        shade.wantsLayer = true
+        shade.layer?.backgroundColor = NSColor.black.withAlphaComponent(tint).cgColor
+        shade.autoresizingMask = [.width, .height]
+        blur.addSubview(shade)
+        return blur
     }
 }
