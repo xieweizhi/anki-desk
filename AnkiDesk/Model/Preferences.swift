@@ -67,6 +67,7 @@ final class Preferences {
     var autoplayAudio: Bool { didSet { store.set(autoplayAudio, forKey: "autoplayAudio") } }
     var finishedSetup: Bool { didSet { store.set(finishedSetup, forKey: "finishedSetup") } }
     var audioSpeed: Double { didSet { store.set(audioSpeed, forKey: "audioSpeed") } }
+    var focusMode: Bool { didSet { store.set(focusMode, forKey: "focusMode") } }
     var cardTextSize: TextSize { didSet { store.set(cardTextSize.rawValue, forKey: "cardTextSize") } }
     var openAnkiOnStart: Bool { didSet { store.set(openAnkiOnStart, forKey: "openAnkiOnStart") } }
 
@@ -82,6 +83,7 @@ final class Preferences {
         clickThrough = store.bool(forKey: "clickThrough")
         autoplayAudio = store.object(forKey: "autoplayAudio") as? Bool ?? true
         finishedSetup = store.bool(forKey: "finishedSetup")
+        focusMode = store.bool(forKey: "focusMode")
         audioSpeed = (store.object(forKey: "audioSpeed") as? Double).flatMap { AudioSpeed.all.contains($0) ? $0 : nil } ?? 1
         cardTextSize = store.string(forKey: "cardTextSize").flatMap(TextSize.init) ?? .standard
         openAnkiOnStart = store.object(forKey: "openAnkiOnStart") as? Bool ?? true

@@ -37,6 +37,7 @@ final class WidgetController: NSObject, NSWindowDelegate {
     let panel = WidgetPanel()
     private let model: AppModel
     private let review: ReviewSession
+    private let dimmer = FocusDimmer()
     /// Brought forward by the shortcut: floats and takes the keyboard until it loses focus.
     private var summoned = false
 
@@ -97,14 +98,27 @@ final class WidgetController: NSObject, NSWindowDelegate {
         if review.isActive { review.stop() } else { hide() }
     }
 
+    func windowDidBecomeKey(_ notification: Notification) {
+        applyLevel()
+    }
+
     func windowDidResignKey(_ notification: Notification) {
-        guard summoned else { return }
         summoned = false
         applyLevel()
     }
 
     private func applyLevel() {
         let prefs = model.prefs
+        // Only while the widget has the keyboard: Anki Desk isn't in the app switcher, so after switching
+        // away there'd be no way past a dimmed screen to the app the user went to.
+        let focusing = prefs.focusMode && review.isActive && panel.isKeyWindow
+        dimmer.set(focusing)
+        if focusing {
+            panel.level = FocusDimmer.widgetLevel
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            panel.ignoresMouseEvents = false
+            return
+        }
         if summoned {
             panel.level = .floating
             panel.ignoresMouseEvents = false
@@ -128,6 +142,8 @@ final class WidgetController: NSObject, NSWindowDelegate {
         withObservationTracking {
             _ = model.prefs.level
             _ = model.prefs.clickThrough
+            _ = model.prefs.focusMode
+            _ = review.isActive
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.applyLevel()

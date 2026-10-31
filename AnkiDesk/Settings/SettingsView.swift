@@ -85,11 +85,12 @@ struct SettingsView: View {
                         openAtLogin = prefs.openAtLogin
                     }
                 Toggle("Play audio automatically", isOn: $prefs.autoplayAudio)
+                Toggle("Focus mode (dim everything else during review)", isOn: $prefs.focusMode)
                 Toggle("Click-through (ignore the mouse)", isOn: $prefs.clickThrough)
             } header: {
                 Text("Widget")
             } footer: {
-                Text("With click-through on, use the shortcut to reach the widget.")
+                Text("Focus mode lifts when the review ends (Esc) or you switch to another app. With click-through on, use the shortcut to reach the widget.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 

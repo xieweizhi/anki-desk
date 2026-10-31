@@ -14,6 +14,16 @@ struct PreferencesTests {
         #expect(!Preferences(store: store).openAnkiOnStart)
     }
 
+    @Test func focusModeIsOffByDefault() {
+        #expect(!Preferences(store: .testStore()).focusMode)
+    }
+
+    @Test func remembersFocusMode() {
+        let store = UserDefaults.testStore()
+        Preferences(store: store).focusMode = true
+        #expect(Preferences(store: store).focusMode)
+    }
+
     @Test func audioPlaysAtNormalSpeedAtFirst() {
         #expect(Preferences(store: .testStore()).audioSpeed == 1)
     }
