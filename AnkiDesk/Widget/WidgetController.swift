@@ -59,6 +59,7 @@ final class WidgetController: NSObject, NSWindowDelegate {
         panel.contentView = hosting
         panel.delegate = self
         panel.onEscape = { [weak self] in self?.escape() }
+        dimmer.onExit = { [weak self] in self?.escape() }
         if !panel.setFrameUsingName("AnkiDeskWidget"), let screen = NSScreen.main?.visibleFrame {
             panel.setFrameTopLeftPoint(NSPoint(x: screen.minX + 40, y: screen.maxY - 40))
         }
