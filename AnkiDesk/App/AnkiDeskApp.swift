@@ -31,11 +31,13 @@ private struct MenuContent: View {
     let delegate: AppDelegate
 
     var body: some View {
+        @Bindable var prefs = delegate.model.prefs
         Button("Show or Hide Widget") { delegate.widget?.toggle() }
         Button("Review Now") { delegate.startReview() }
             .disabled(delegate.model.totals.all == 0 || delegate.model.connection != .connected)
         Button("Sync Now") { Task { await delegate.model.syncNow() } }
             .disabled(delegate.model.connection != .connected)
+        Toggle("Focus Mode", isOn: $prefs.focusMode)
         Divider()
         Button("Settings…") { delegate.showSettings() }
             .keyboardShortcut(",")
