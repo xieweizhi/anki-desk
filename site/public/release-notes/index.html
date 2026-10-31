@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Release notes · Anki Desk</title>
-<meta name="description" content="Every Anki Desk release, newest first, with what changed and a download for each.">
+<meta name="description" content="Every Anki Desk release, newest first, with what changed and a download of the latest.">
 <meta property="og:title" content="Anki Desk release notes">
 <meta property="og:image" content="/img/og.png">
 <link rel="icon" href="/favicon.png" type="image/png">
@@ -80,7 +80,7 @@
     <div class="wrap">
       <p class="eyebrow">Anki Desk</p>
       <h1>Release notes</h1>
-      <p class="lede">Every version, newest first, each a DMG for macOS 14 or later. From 0.1.2 on, releases are signed and notarized by Apple.</p>
+      <p class="lede">Every version, newest first. Anki Desk needs macOS 14 or later. From 0.1.2 on, releases are signed and notarized by Apple.</p>
       <a class="btn" href="/download">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
         Download the latest
@@ -149,7 +149,7 @@
         <div class="notes">
           ${changes(r.body)}
           <div class="links">
-            ${dmg ? `<a class="btn" href="${escape(dmg.browser_download_url)}">${DOWNLOAD_ICON}Download ${version} · ${size(dmg.size)}</a>` : ""}
+            ${dmg && r === latest ? `<a class="btn" href="${escape(dmg.browser_download_url)}">${DOWNLOAD_ICON}Download ${version} · ${size(dmg.size)}</a>` : ""}
             <a class="plain" href="${escape(r.html_url)}">View on GitHub</a>
           </div>
         </div>
